@@ -2,42 +2,44 @@
 
 **The missing link for OpenShift UPI expansion.**
 
-## 📖 项目简介
+> 📖 **中文文档**: [简体中文](docs/README.zh.md) | **English** (current)
 
-这是一个旨在标准化 OpenShift UPI 环境下新增节点流程的自动化工具。它解决了手动添加节点时最头疼的三个问题：
+## 📖 Project Overview
 
-- **网络配置不一致**：自动克隆现有生产节点的 NetworkManager 配置，确保路由、DNS 与集群同步。
-- **标识冲突**：自动生成全局唯一 UUID 并注入主机名，防止网络标识冲突。
-- **环境自举能力**：创新性地采用"双态一体化"脚本设计，使新节点在 Live 环境中具备"自愈"网络能力，从而顺利拉取远程 Ignition 凭据。
+This is an automation tool designed to standardize the process of adding new nodes in OpenShift UPI environments. It solves the three most challenging problems when manually adding nodes:
 
-## 🎯 核心特性
+- **Network Configuration Inconsistency**: Automatically clones NetworkManager configurations from existing production nodes, ensuring routes and DNS are synchronized with the cluster.
+- **Identity Conflicts**: Automatically generates globally unique UUIDs and injects hostnames to prevent network identity conflicts.
+- **Environment Bootstrap Capability**: Innovatively adopts a "dual-state integrated" script design, enabling new nodes to have "self-healing" network capabilities in Live environments, thus successfully pulling remote Ignition credentials.
 
-- ✅ **一键准备**：在跳板机上自动提取集群凭据、生成 Ignition 配置
-- ✅ **网络克隆**：智能复制现有节点的网络配置模板
-- ✅ **双态设计**：同一脚本支持 Server（准备）和 Client（安装）两种角色
-- ✅ **零手动配置**：新节点只需执行一条 curl 命令即可完成安装
+## 🎯 Key Features
 
-## 🛠️ 使用方法
+- ✅ **One-Click Preparation**: Automatically extracts cluster credentials and generates Ignition configurations on the bastion host
+- ✅ **Network Cloning**: Intelligently copies network configuration templates from existing nodes
+- ✅ **Dual-State Design**: The same script supports both Server (preparation) and Client (installation) roles
+- ✅ **Zero Manual Configuration**: New nodes only need to execute a single curl command to complete installation
 
-### ⚠️ 版本兼容性
+## 🛠️ Usage
 
-**重要提示**：请确保使用的 RHCOS Live ISO 版本与您的 OpenShift 集群版本匹配。不同版本的 RHCOS 可能与集群不兼容，导致节点无法正常加入。
+### ⚠️ Version Compatibility
 
-- **OCP 4.x**：需要使用对应版本的 RHCOS Live ISO
-- 建议使用与现有节点相同版本的 RHCOS 镜像
+**Important**: Ensure that the RHCOS Live ISO version matches your OpenShift cluster version. Different versions of RHCOS may be incompatible with the cluster, preventing nodes from joining properly.
 
-### 📥 获取 RHCOS Live ISO
+- **OCP 4.x**: Requires RHCOS Live ISO of the corresponding version
+- **OCP 5.x**: Requires RHCOS Live ISO of the corresponding version
+- It is recommended to use the same RHCOS image version as existing nodes
 
-**推荐方法**：使用 `openshift-install` 命令获取与集群版本完全匹配的 RHCOS Live ISO 下载链接。
+### 📥 Obtaining RHCOS Live ISO
 
-#### 步骤 1：确认 OpenShift 安装工具版本
+**Recommended Method**: Use the `openshift-install` command to obtain the RHCOS Live ISO download link that exactly matches your cluster version.
+
+#### Step 1: Verify OpenShift Install Tool Version
 
 ```bash
 openshift-install version
 ```
 
-**示例输出：**
-
+**Example Output:**
 ```
 openshift-install 4.18.13
 built from commit 9357b668a760d53a34f7094840d1e9f773127441
@@ -45,14 +47,13 @@ release image quay.io/openshift-release-dev/ocp-release@sha256:a93c65b0f9de1d2e2
 release architecture amd64
 ```
 
-#### 步骤 2：获取 RHCOS Live ISO 下载链接
+#### Step 2: Get RHCOS Live ISO Download Link
 
 ```bash
 openshift-install coreos print-stream-json | grep '\.iso[^.]'
 ```
 
-**示例输出：**
-
+**Example Output:**
 ```
 "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.18-9.4/builds/418.94.202501221327-0/aarch64/rhcos-418.94.202501221327-0-live.aarch64.iso",
 "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.18-9.4/builds/418.94.202501221327-0/ppc64le/rhcos-418.94.202501221327-0-live.ppc64le.iso",
@@ -60,79 +61,79 @@ openshift-install coreos print-stream-json | grep '\.iso[^.]'
 "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.18-9.4/builds/418.94.202501221327-0/x86_64/rhcos-418.94.202501221327-0-live.x86_64.iso",
 ```
 
-#### 步骤 3：下载对应架构的 ISO
+#### Step 3: Download ISO for Your Architecture
 
-根据您的服务器架构（通常是 `x86_64`），使用 `wget` 或 `curl` 下载：
+Based on your server architecture (usually `x86_64`), use `wget` or `curl` to download:
 
 ```bash
-# x86_64 架构（最常见）
+# x86_64 architecture (most common)
 wget https://rhcos.mirror.openshift.com/art/storage/prod/streams/4.18-9.4/builds/418.94.202501221327-0/x86_64/rhcos-418.94.202501221327-0-live.x86_64.iso
 
-# 验证下载文件大小（通常约 1.2GB）
+# Verify downloaded file size (typically around 1.2GB)
 du -sh rhcos-*.iso
 ```
 
-**注意事项**：
+**Notes**:
+- Ensure the `openshift-install` version matches your cluster version
+- Select the ISO that matches your server architecture (x86_64, aarch64, ppc64le, or s390x)
+- The downloaded ISO file size is typically around 1.2GB
 
-- 确保 `openshift-install` 版本与您的集群版本匹配
-- 选择与服务器架构匹配的 ISO（x86_64、aarch64、ppc64le 或 s390x）
-- 下载的 ISO 文件大小通常约为 1.2GB
+### Prerequisites
 
-### 前置要求
+- The bastion host must be able to access the OpenShift cluster (has executed `oc login`)
+- New nodes must be able to access the bastion host's HTTP service (default port 8080)
+- New nodes must mount a **RHCOS Live ISO image** that matches the cluster version
 
-- 跳板机需要能够访问 OpenShift 集群（已执行 `oc login`）
-- 新节点需要能够访问跳板机的 HTTP 服务（默认端口 8080）
-- 新节点需要挂载与集群版本匹配的 **RHCOS Live ISO 镜像**
+### Step 1: Prepare Configuration on Bastion Host
 
-### 步骤 1：在跳板机上准备配置
-
-在 OCP 集群的跳板机上执行以下命令：
+Execute the following command on the OCP cluster's bastion host:
 
 ```bash
-sh ocp-node-tool.sh prepare <主机名> <IP/掩码> <MAC地址>
+sh ocp-node-tool.sh prepare <hostname> <IP/mask> <MAC address>
 ```
 
-**示例：**
+**Example:**
 
 ```bash
-[root@registry add-node]# sh ocp-node-tool.sh prepare worker5 172.168.21.199 00:50:56:91:e2:cf
+[root@registry add-node]# sh ocp-node-tool.sh prepare worker5 10.0.0.199/24 00:50:56:91:e2:cf
 [LOG] 正在配置本地 HTTP 服务...
 [LOG] 正在从集群提取凭据并注入主机名...
 [LOG] 正在克隆现有节点网络配置...
 [LOG] ------------------------------------------------
 [LOG] ✅ 配置准备就绪！
 [LOG] 请在新节点(Live ISO)执行以下命令进行安装：
-curl -sL http://192.168.2.18:8080/worker5/install.sh | sudo bash -s install 192.168.2.18 worker5
+curl -sL http://192.168.1.100:8080/worker5/install.sh | sudo bash -s install 192.168.1.100 worker5
 [LOG] ------------------------------------------------
 ```
 
-### 步骤 2：在新节点上执行安装
+### Step 2: Execute Installation on New Node
 
-1. **挂载 RHCOS Live ISO**：在虚拟机中挂载并引导启动 `rhcos-418.94.202501221327-0-live.x86_64.iso`
-2. **执行安装命令**：在 Live ISO 的终端中执行步骤 1 中输出的 curl 命令：
+1. **Mount RHCOS Live ISO**: Mount and boot the `rhcos-418.94.202501221327-0-live.x86_64.iso` in the virtual machine
+
+2. **Execute Installation Command**: In the Live ISO terminal, execute the curl command output from Step 1:
 
 ```bash
-curl -sL http://<跳板机IP>:8080/<主机名>/install.sh | sudo bash -s install <跳板机IP> <主机名>
+curl -sL http://<bastion-IP>:8080/<hostname>/install.sh | sudo bash -s install <bastion-IP> <hostname>
 ```
 
-3. **等待安装完成**：安装完成后，移除介质并重启。虚拟机引导时会自动重启 2 次。
+3. **Wait for Installation to Complete**: After installation completes, remove the media and reboot. The virtual machine will automatically reboot twice during boot.
 
-### 步骤 3：批准证书签名请求（CSR）
+### Step 3: Approve Certificate Signing Requests (CSR)
 
-通过 `oc` 命令授权 CSR，直到所有 pending 状态消失：
+Authorize CSRs using the `oc` command until all pending statuses disappear:
 
 ```bash
-# 批量批准所有待处理的 CSR
+# Batch approve all pending CSRs
 oc get csr -o go-template='{{range .items}}{{if not .status}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}' | xargs --no-run-if-empty oc adm certificate approve
 
-# 检查 CSR 状态
+# Check CSR status
 oc get csr
 
-# 验证节点状态
+# Verify node status
 oc get node
 ```
 
-**预期输出：**
+**Expected Output:**
 
 ```
 NAME      STATUS   ROLES                  AGE    VERSION
@@ -146,36 +147,35 @@ worker4   Ready    worker                 3h8m   v1.31.8
 worker5   Ready    worker                 51s    v1.31.8
 ```
 
-## 📋 工作原理
+## 📋 How It Works
 
-1. **准备阶段（Server 模式）**：
+1. **Preparation Phase (Server Mode)**:
+   - Extracts `worker-user-data-managed` Secret from OpenShift cluster
+   - Injects custom hostname into Ignition configuration
+   - Clones NetworkManager configuration template from existing nodes
+   - Generates new UUID and replaces IP and MAC addresses
+   - Starts HTTP service to provide configuration downloads
 
-   - 从 OpenShift 集群提取 `worker-user-data-managed` Secret
-   - 注入自定义主机名到 Ignition 配置
-   - 从现有节点克隆 NetworkManager 配置模板
-   - 生成新的 UUID 并替换 IP、MAC 地址
-   - 启动 HTTP 服务提供配置下载
-2. **安装阶段（Client 模式）**：
+2. **Installation Phase (Client Mode)**:
+   - Downloads network configuration file in Live ISO environment
+   - Applies network configuration to enable node access to cluster
+   - Uses `coreos-installer` to install RHCOS and apply Ignition configuration
+   - Automatically reboots to complete node joining
 
-   - 在 Live ISO 环境中下载网络配置文件
-   - 应用网络配置使节点能够访问集群
-   - 使用 `coreos-installer` 安装 RHCOS 并应用 Ignition 配置
-   - 自动重启完成节点加入
+## 🔧 Technical Details
 
-## 🔧 技术细节
+- **Network Interface**: Defaults to `ens192` (can be modified via `INTERFACE` variable in script)
+- **HTTP Port**: Defaults to 8080 (can be modified via `HTTP_PORT` variable in script)
+- **Dependencies**: `jq`, `httpd`, `uuidgen`, `coreos-installer`
 
-- **网络接口**：默认使用 `ens192`（可在脚本中修改 `INTERFACE` 变量）
-- **HTTP 端口**：默认 8080（可在脚本中修改 `HTTP_PORT` 变量）
-- **依赖工具**：`jq`、`httpd`、`uuidgen`、`coreos-installer`
+## 📝 Notes
 
-## 📝 注意事项
+- Ensure network connectivity between the bastion host and new nodes
+- New node IP addresses must not conflict with existing nodes
+- MAC addresses must be the actual MAC addresses of the new nodes
+- Do not interrupt network connection during installation
+- **Must use RHCOS Live ISO that matches the cluster version** - version mismatch may prevent nodes from joining the cluster
 
-- 确保跳板机和新节点之间的网络连通性
-- 新节点的 IP 地址不能与现有节点冲突
-- MAC 地址必须是新节点的实际 MAC 地址
-- 安装过程中请勿中断网络连接
-- **必须使用与集群版本匹配的 RHCOS Live ISO**，版本不匹配可能导致节点无法加入集群
-
-## 📄 许可证
+## 📄 License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
